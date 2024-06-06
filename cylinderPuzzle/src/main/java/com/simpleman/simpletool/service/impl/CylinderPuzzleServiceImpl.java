@@ -207,40 +207,35 @@ public class CylinderPuzzleServiceImpl implements CylinderPuzzleService {
                 continue;
             }
             for (ArrayList<Coordinate> curForm : curPuzzle.getAvailableForms()) { // 遍历当前所有可用形态
-                Coordinate curStartPoint = curForm.get(0);
-                for (Coordinate searchCoordinate : curForm) {
-                    if (searchCoordinate.getX() == 1 || searchCoordinate.getY() == 1) {
-                        curStartPoint = searchCoordinate; // 找一个边缘点去对
-                        break;
-                    }
-                }
                 for (Coordinate availablePoz : curAvailablePoz) { // 遍历当前所有可用起点
                     if (curPuzzle.getIsCentral() && centerPlaced[availablePoz.getY()]) { // 一行只能放一个中心积木
                         continue;
                     }
-                    // 当前可用形态中的所有坐标都可作为起点，也会产生不同的后续
-                    ArrayList<Coordinate> placedFormCoordinate = placePuzzle(availablePoz, curForm, curStartPoint); // 将当前积木放到map中
-                    if (placedFormCoordinate != null) { // 若能正确放置
-                        if (curPuzzle.getIsCentral()) {
-                            centerPlaced[availablePoz.getY()] = true;
-                        }
-                        curPuzzle.setUsed(true); // 能正确放置，则将此积木标记已用
-                        ArrayList<Coordinate> originalCoordinate = curPuzzle.getCoordinates(); // 缓存当前积木的原坐标
-                        curPuzzle.setCoordinates(placedFormCoordinate);  // 将当前积木的坐标替换成放置后的坐标
-                        if (usedPuzzleNum == puzzles.size() && isMapFullFilled()) { // 最后一块，且能正确放入，且图已被填满
-                            return new ArrayList<>(Collections.singletonList(curPuzzle));
-                        } else { // 未到最后一块积木，则继续枚举
-                            Set<Coordinate> newAvailablePoz = updateAvailablePoz(placedFormCoordinate, curAvailablePoz);
-                            ArrayList<Puzzle> ans = enumeratePuzzle(puzzles, usedPuzzleNum + 1, newAvailablePoz, centerPlaced); // 若后续的递归能找到解决方案
-                            if (ans != null) {
-                                ans.add(curPuzzle);
-                                return ans;
-                            } else {
-                                curPuzzle.setUsed(false);  // 后续无解，取出此积木并标记为未使用
-                                curPuzzle.setCoordinates(originalCoordinate); // 后续无解，则当前积木恢复成原坐标
-                                rollbackMap(placedFormCoordinate); // 后续无解，则将本次放置的积木拿出来
-                                if (curPuzzle.getIsCentral()) {
-                                    centerPlaced[availablePoz.getY()] = false;
+                    for (Coordinate curStartPoint : curForm) {
+                        // 当前可用形态中的所有坐标都可作为起点，也会产生不同的后续
+                        ArrayList<Coordinate> placedFormCoordinate = placePuzzle(availablePoz, curForm, curStartPoint); // 将当前积木放到map中
+                        if (placedFormCoordinate != null) { // 若能正确放置
+                            if (curPuzzle.getIsCentral()) {
+                                centerPlaced[availablePoz.getY()] = true;
+                            }
+                            curPuzzle.setUsed(true); // 能正确放置，则将此积木标记已用
+                            ArrayList<Coordinate> originalCoordinate = curPuzzle.getCoordinates(); // 缓存当前积木的原坐标
+                            curPuzzle.setCoordinates(placedFormCoordinate);  // 将当前积木的坐标替换成放置后的坐标
+                            if (usedPuzzleNum == puzzles.size() && isMapFullFilled()) { // 最后一块，且能正确放入，且图已被填满
+                                return new ArrayList<>(Collections.singletonList(curPuzzle));
+                            } else { // 未到最后一块积木，则继续枚举
+                                Set<Coordinate> newAvailablePoz = updateAvailablePoz(placedFormCoordinate, curAvailablePoz);
+                                ArrayList<Puzzle> ans = enumeratePuzzle(puzzles, usedPuzzleNum + 1, newAvailablePoz, centerPlaced);
+                                if (ans != null) {
+                                    ans.add(curPuzzle);
+                                    return ans;
+                                } else {
+                                    curPuzzle.setUsed(false);  // 后续无解，取出此积木并标记为未使用
+                                    curPuzzle.setCoordinates(originalCoordinate); // 后续无解，则当前积木恢复成原坐标
+                                    rollbackMap(placedFormCoordinate); // 后续无解，则将本次放置的积木拿出来
+                                    if (curPuzzle.getIsCentral()) {
+                                        centerPlaced[availablePoz.getY()] = false;
+                                    }
                                 }
                             }
                         }
